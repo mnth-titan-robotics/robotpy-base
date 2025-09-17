@@ -11,57 +11,72 @@ import typing
 
 from robotcontainer import RobotContainer
 
+
 class Robot(commands2.TimedCommandRobot):
-  """
-  Command v2 robots are encouraged to inherit from TimedCommandRobot, which
-  has an implementation of robotPeriodic which runs the scheduler for you
-  """
+    """Add any setup/cleanup that needs to be done when starting teleop, auto or disabling the robot here"""
+    container: typing.Optional[RobotContainer] = None
+    autonomousCommand: typing.Optional[commands2.Command] = None
 
-  autonomousCommand: typing.Optional[commands2.Command] = None
+    def __init__(self):
+        """Calls the TimedCommandRobot __init__ method"""
+        super().__init__()
 
-  def robotInit(self) -> None:
-    """
-    This function is run when the robot is first started up and should be used for any
-    initialization code.
-    """
+    def robotInit(self) -> None:
+        """
+        Called once when the robot is first started up and should be used for any
+        initialization code.
+        """
+        wpilib.DriverStation.silenceJoystickConnectionWarning(True)
 
-    # Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-    # autonomous chooser on the dashboard.
-    self.container = RobotContainer()
+        # Instantiate our RobotContainer.  This will perform all our button bindings, and put our
+        # autonomous chooser on the dashboard.
+        self.container = RobotContainer()
 
-  def disabledInit(self) -> None:
-    """This function is called once each time the robot enters Disabled mode."""
-    pass
+    def robotPeriodic(self):
+        """Called periodically for all modes"""
 
-  def disabledPeriodic(self) -> None:
-    """This function is called periodically when disabled"""
-    pass
+    def disabledInit(self) -> None:
+        """Called once each time the robot enters Disabled mode."""
 
-  def autonomousInit(self) -> None:
-    """This autonomous runs the autonomous command selected by your RobotContainer class."""
-    self.autonomousCommand = self.container.getAutonomousCommand()
+    def disabledPeriodic(self) -> None:
+        """Called periodically when disabled"""
 
-    if self.autonomousCommand:
-      self.autonomousCommand.schedule()
+    def autonomousInit(self) -> None:
+        """Called once when beginning autonomous. Should schedule the selected autonomous command."""
+        self.autonomousCommand = self.container.getAutonomousCommand()
 
-  def autonomousPeriodic(self) -> None:
-    """This function is called periodically during autonomous"""
-    pass
+        if self.autonomousCommand:
+            self.autonomousCommand.schedule()
 
-  def teleopInit(self) -> None:
-    """This function is called once each time the robot enters TeleOp mode."""
-    # This makes sure that the autonomous stops running when
-    # teleop starts running. If you want the autonomous to
-    # continue until interrupted by another command, remove
-    # this line or comment it out.
-    if self.autonomousCommand:
-      self.autonomousCommand.cancel()
+    def autonomousPeriodic(self) -> None:
+        """Called periodically during autonomous"""
 
-  def teleopPeriodic(self) -> None:
-    """This function is called periodically during operator control"""
-    pass
+    def teleopInit(self) -> None:
+        """Called once each time the robot enters TeleOp mode."""
+        # This makes sure that the autonomous stops running when
+        # teleop starts running. If you want the autonomous to
+        # continue until interrupted by another command, remove
+        # this line or comment it out.
+        if self.autonomousCommand:
+            self.autonomousCommand.cancel()
 
-  def testInit(self) -> None:
-    """This function is called once for each test."""
-    # Cancels all running commands at the start of test mode
-    commands2.CommandScheduler.getInstance().cancelAll()
+    def teleopPeriodic(self) -> None:
+        """Called periodically during operator control"""
+
+    def testInit(self) -> None:
+        """Called once for each test."""
+        # Cancels all running commands at the start of test mode
+        commands2.CommandScheduler.getInstance().cancelAll()
+
+    def testPeriodic(self):
+        """Called periodically when running tests"""
+
+    def _simulationInit(self):
+        """Called once when initializing simulation, after robotInit"""
+
+    def _simulationPeriodic(self):
+        """Called periodically during simulation"""
+
+
+if __name__ == "__main__":
+    wpilib.run(Robot)
