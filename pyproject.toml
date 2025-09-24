@@ -22,4 +22,6 @@ robotpy_extras = [
 ]
 
 # Other pip packages to install
-requires = []
+requires = [
+    "protobuf==6.32.0rc1"
+]
