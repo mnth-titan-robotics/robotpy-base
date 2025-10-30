@@ -8,7 +8,7 @@ import math
 class Controllers:
     DriverPort = 0
     OperatorPort = 1
-
+    Deadband = 0.15
 
 class Subsystems:
     class Drive:
@@ -64,8 +64,8 @@ class Subsystems:
         TranslationPID = PID(1.0, 0.0, 0.0)
         RotationPID = PID(1.0, 0.0, 0.0)
 
-        MaxVelocity = 15
-        MaxAcceleration = 3
+        MaxVelocity = 2
+        MaxAcceleration = 2.0
 
     class Roller:
         MotorId = 15

@@ -1,9 +1,9 @@
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from wpilib import Timer
 from ntcore import NetworkTableInstance
-import protos.generated.commands_pb2 as cpb2
-import protos.generated.geometry2d_pb2 as gpb2
-import protos.generated.data_pb2 as dpb2
+import services.protos.generated.commands_pb2 as cpb2
+import services.protos.generated.geometry2d_pb2 as gpb2
+import services.protos.generated.data_pb2 as dpb2
 
 # --- QuestNav Class Conversion ---
 class QuestNav:
@@ -44,8 +44,7 @@ class QuestNav:
         # Cached requests to lessen object creation (as in Java)
         self.cached_command_request = cpb2.ProtobufQuestNavCommand()
         self.cached_pose_reset_payload = cpb2.ProtobufQuestNavPoseResetPayload()
-        self.cached_proto_pose = gpb2.ProtobufPose2d()
-        self.cached_pose_reset_payload.target_pose = self.cached_proto_pose
+        self.cached_proto_pose = self.cached_pose_reset_payload.target_pose
 
         self.last_sent_request_id = 0
         self.last_processed_response_id = 0
@@ -70,15 +69,16 @@ class QuestNav:
         self.cached_command_request.Clear()
         self.last_sent_request_id += 1
 
-        payload = self.cached_pose_reset_payload
+        payload = self.cached_command_request.pose_reset_payload
         payload.target_pose.translation.x = pose.translation().x
         payload.target_pose.translation.y = pose.translation().y
         payload.target_pose.rotation.value = pose.rotation().radians()
         self.cached_command_request.type = cpb2.QuestNavCommandType.POSE_RESET
         self.cached_command_request.command_id = self.last_sent_request_id
-        self.cached_command_request.pose_reset_payload = payload
-
-        self.request_publisher.set(self.cached_command_request.SerializeToString())
+        # self.cached_command_request.pose_reset_payload = payload
+        serialized_request = self.cached_command_request.SerializeToString()
+        print(f"Called set_pose {serialized_request}")
+        self.request_publisher.set(serialized_request)
 
     def get_battery_percent(self) -> int:
         """

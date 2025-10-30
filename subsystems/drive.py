@@ -7,6 +7,7 @@ from wpimath.kinematics import ChassisSpeeds, MecanumDriveWheelSpeeds, MecanumDr
 from lib.enums import ModuleLocation
 from lib.differential_module import DifferentialModule
 import constants
+from services.questnav import QuestNav
 
 Constants = constants.Subsystems.Drive
 
@@ -14,7 +15,7 @@ Constants = constants.Subsystems.Drive
 class Drive(Subsystem):
     """Responsible for moving our robot"""
 
-    def __init__(self):
+    def __init__(self, questnav: QuestNav):
         # Calls the Subsystem __init__ method
         super().__init__()
         self._differentialModules = dict((c.location, DifferentialModule(c))
@@ -26,6 +27,8 @@ class Drive(Subsystem):
             self._differentialModules[ModuleLocation.RightFront].getMotorController(),
             self._differentialModules[ModuleLocation.RightRear].getMotorController()
         )
+        self._questnav = questnav
+        questnav.set_pose(Pose2d(1.0, 1.0, Rotation2d()))
 
         # TODO: Get initial pose from a localization system
         self._odometry = MecanumDriveOdometry(
@@ -48,7 +51,8 @@ class Drive(Subsystem):
     
     def getPose(self) -> Pose2d:
         """Returns the current robot pose based on odometry"""
-        return self._odometry.getPose()
+        return self._questnav.get_pose()
+        #return self._odometry.getPose()
     
     def resetOdometry(self, pose: Pose2d) -> None:
         self._odometry.resetPosition(

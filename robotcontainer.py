@@ -3,15 +3,19 @@
 # Open Source Software; you can modify and/or share it under the terms of
 # the WPILib BSD license file in the root directory of this project.
 #
-
+import wpimath
 import enum
 import commands2
 import constants
+from services.questnav import QuestNav
 from subsystems.drive import Drive
 from subsystems.roller import Roller
 from commands.auto import Auto
 from commands.game import Game
 from wpimath.kinematics import ChassisSpeeds
+from wpimath.filter import SlewRateLimiter
+from wpimath.geometry import Pose2d, Translation2d
+from wpimath.trajectory import TrapezoidProfile
 
 # Create an alias to simplify usage
 cmd = commands2.cmd
@@ -38,6 +42,9 @@ class RobotContainer:
         return self.CommandSelector.ONE
 
     def __init__(self) -> None:
+        self._driveXprofile=SlewRateLimiter(constants.Subsystems.Drive.MaxAcceleration,-constants.Subsystems.Drive.MaxAcceleration)
+        self._driveYprofile=SlewRateLimiter(constants.Subsystems.Drive.MaxAcceleration,-constants.Subsystems.Drive.MaxAcceleration)
+        self._driveRotprofile=SlewRateLimiter(constants.Subsystems.Drive.MaxAcceleration,-constants.Subsystems.Drive.MaxAcceleration)        
         self._initSubsystems()
         self._initControllers()
         self._initCommands()
@@ -45,7 +52,8 @@ class RobotContainer:
 
     def _initSubsystems(self):
         """Initializes subsystems. Should only be called from __init__"""
-        self._drive = Drive()
+        self._questnav = QuestNav()
+        self._drive = Drive(self._questnav)
         self._roller = Roller()
 
     def _initControllers(self):
@@ -65,9 +73,10 @@ class RobotContainer:
         self._drive.setDefaultCommand(
             self._drive.driveCommand(
                 lambda: ChassisSpeeds(
-                    -self._driverController.getLeftY(),
-                    -self._driverController.getLeftX(),
-                    -self._driverController.getRightY())
+                    self._driveYprofile.calculate(wpimath.applyDeadband(-self._driverController.getLeftY(),constants.Controllers.Deadband)),
+                    self._driveXprofile.calculate(wpimath.applyDeadband(self._driverController.getLeftX(),constants.Controllers.Deadband)),
+                    self._driveRotprofile.calculate(wpimath.applyDeadband(self._driverController.getRightX(),constants.Controllers.Deadband))
+                )
             )
         )
         self._roller.setDefaultCommand(
@@ -102,4 +111,6 @@ class RobotContainer:
 
         :returns: the command to run in autonomous
         """
+        # trajectory = TrajectoryGenerator.generateTrajectory(Pose2d(), [Translation2d(2, 0)], Pose2d())
+        # return self.game.followTrajectoryCommand(self._drive.getPose, trajectory)
         return self.auto.get()

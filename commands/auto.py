@@ -21,6 +21,7 @@ class Auto:
         # Default 'None' auto, does nothing. The second parameter is a function that will be called in our onChange callback below
         self._autos.setDefaultOption("None", cmd.none)
         self._autos.addOption("[Center]", self.auto_center)
+        self._autos.addOption("[Left]", self.auto_left)
         # When the selected auto changes call the function (eg: cmd.none(), self.auto_center()) to get the command, then store it in self._auto
         self._autos.onChange(lambda auto: self.set(auto()))
         # Send the list of options to SmartDashboard
@@ -39,6 +40,19 @@ class Auto:
         speeds = ChassisSpeeds(vx=0.25)
         return cmd.sequence(
             drive.driveCommand(speeds).withTimeout(3.25),
+            drive.stopCommand().withTimeout(0.1),
+            roller.ejectCommand().withTimeout(0.5)
+        )
+    
+    def auto_left(self) -> Command:
+        # Move forward at 25% speed for 3.25s, then stop
+        drive = self._robot._drive
+        roller = self._robot._roller
+        speeds = ChassisSpeeds(vx=0.25)
+        return cmd.sequence(
+            drive.driveCommand(lambda: ChassisSpeeds(omega=0.25)).withTimeout(0.35),
+            drive.driveCommand(lambda: speeds).withTimeout(3.25),
+            drive.driveCommand(lambda: ChassisSpeeds(omega=-0.25)).withTimeout(0.35),
             drive.stopCommand().withTimeout(0.1),
             roller.ejectCommand().withTimeout(0.5)
         )
