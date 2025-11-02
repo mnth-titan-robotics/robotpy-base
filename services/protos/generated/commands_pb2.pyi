@@ -1,4 +1,4 @@
-import geometry2d_pb2 as _geometry2d_pb2
+import geometry3d_pb2 as _geometry3d_pb2
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -16,8 +16,8 @@ POSE_RESET: QuestNavCommandType
 class ProtobufQuestNavPoseResetPayload(_message.Message):
     __slots__ = ("target_pose",)
     TARGET_POSE_FIELD_NUMBER: _ClassVar[int]
-    target_pose: _geometry2d_pb2.ProtobufPose2d
-    def __init__(self, target_pose: _Optional[_Union[_geometry2d_pb2.ProtobufPose2d, _Mapping]] = ...) -> None: ...
+    target_pose: _geometry3d_pb2.ProtobufPose3d
+    def __init__(self, target_pose: _Optional[_Union[_geometry3d_pb2.ProtobufPose3d, _Mapping]] = ...) -> None: ...
 
 class ProtobufQuestNavCommand(_message.Message):
     __slots__ = ("type", "command_id", "pose_reset_payload")

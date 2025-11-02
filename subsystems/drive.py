@@ -1,7 +1,7 @@
 ﻿from commands2 import Subsystem, Command
 from typing import Callable
 from wpilib.drive import MecanumDrive
-from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.geometry import Pose2d, Pose3d, Rotation2d, Rotation3d, Translation3d
 from wpimath.kinematics import ChassisSpeeds, MecanumDriveWheelSpeeds, MecanumDriveOdometry, MecanumDriveWheelPositions
 
 from lib.enums import ModuleLocation
@@ -28,7 +28,6 @@ class Drive(Subsystem):
             self._differentialModules[ModuleLocation.RightRear].getMotorController()
         )
         self._questnav = questnav
-        questnav.set_pose(Pose2d(1.0, 1.0, Rotation2d()))
 
         # TODO: Get initial pose from a localization system
         self._odometry = MecanumDriveOdometry(
@@ -48,6 +47,11 @@ class Drive(Subsystem):
             Rotation2d(),
             self.getWheelPositions()
         )
+        # TODO: Move this to auto selection - set the starting pose from the initial auto pose
+        # This only works if we're using PathPlanner or similar - otherwise we'll have to come up with a pose reset routine 
+        self._questnav.set_pose(Pose3d(
+            Translation3d(1, 1, 0),
+            Rotation3d()))
     
     def getPose(self) -> Pose2d:
         """Returns the current robot pose based on odometry"""

@@ -14,8 +14,6 @@ from commands.auto import Auto
 from commands.game import Game
 from wpimath.kinematics import ChassisSpeeds
 from wpimath.filter import SlewRateLimiter
-from wpimath.geometry import Pose2d, Translation2d
-from wpimath.trajectory import TrapezoidProfile
 
 # Create an alias to simplify usage
 cmd = commands2.cmd
