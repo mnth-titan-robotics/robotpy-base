@@ -9,6 +9,7 @@ import commands2
 import constants
 from services.questnav import QuestNav
 from subsystems.drive import Drive
+from subsystems.localization import Localization
 from subsystems.roller import Roller
 from commands.auto import Auto
 from commands.game import Game
@@ -53,6 +54,7 @@ class RobotContainer:
         self._questnav = QuestNav()
         self._drive = Drive(self._questnav)
         self._roller = Roller()
+        self.Localization = Localization(self._questnav)
 
     def _initControllers(self):
         self._driverController = commands2.button.CommandXboxController(

@@ -15,7 +15,7 @@ from typing import List, Optional
 import time
 
 import ntcore
-from wpimath.geometry import Pose3d
+from wpimath.geometry import Pose3d, Translation3d, Rotation3d, Quaternion
 
 # Import generated protobuf classes
 from services.protos.generated import commands_pb2, geometry3d_pb2, data_pb2
@@ -142,8 +142,7 @@ class QuestNav:
                         frame.data_timestamp,
                         (0.1, 0.1, 0.05)  # Standard deviations
                     )
-        """
-        
+        """        
         # Return all unread frames and clear queue
         frames = self._unread_frames.copy()
         self._unread_frames.clear()
@@ -182,7 +181,8 @@ class QuestNav:
         
         try:
             # Create command protobuf
-            command = commands_pb2.ProtobufQuestNavCommand()
+            command = self._cached_command_request
+            command.Clear()
             command.type = commands_pb2.POSE_RESET
             command.command_id = self._last_command_id
             
@@ -312,7 +312,79 @@ class QuestNav:
         # Command responses are processed in get_all_unread_pose_frames()
         # This method is kept for API compatibility with Java questnav-lib
         # but doesn't need to do anything extra in Python
-        pass
+        
+        # Process all new events
+        events = self.data_listener.readQueue()
+        current_time = time.time()
+        
+        for event in events:
+            try:
+                topic_name = event.data.topic.getName()
+                value = event.data.value
+                # Get timestamp - check which attribute exists
+                if hasattr(event.data, 'time'):
+                    server_timestamp = event.data.time / 1_000_000.0
+                elif hasattr(event.data, 'timestamp'):
+                    server_timestamp = event.data.timestamp
+                else:
+                    server_timestamp = current_time
+                
+                # Parse frameData
+                if "frameData" in topic_name:
+                    raw_data = value.getRaw() if hasattr(value, 'getRaw') else bytes()
+                    
+                    if raw_data:
+                        frame_data = self._cached_frame_data
+                        frame_data.ParseFromString(raw_data)
+                        
+                        self._frame_count = frame_data.frame_count
+                        self._last_frame_timestamp = current_time
+                        
+                        # Extract Pose3d
+                        pose_proto = frame_data.pose3d
+                        trans = pose_proto.translation
+                        rot_quat = pose_proto.rotation.q
+                        
+                        translation = Translation3d(trans.x, trans.y, trans.z)
+                        quaternion = Quaternion(rot_quat.w, rot_quat.x, rot_quat.y, rot_quat.z)
+                        rotation = Rotation3d(quaternion)
+                        pose = Pose3d(translation, rotation)
+                        
+                        # Create PoseFrame
+                        pose_frame = PoseFrame(
+                            quest_pose_3d=pose,
+                            data_timestamp=server_timestamp,
+                            app_timestamp=frame_data.timestamp,
+                            frame_count=frame_data.frame_count
+                        )
+                        
+                        self._unread_frames.append(pose_frame)
+                
+                # Parse deviceData
+                elif "deviceData" in topic_name:
+                    raw_data = value.getRaw() if hasattr(value, 'getRaw') else bytes()
+                    
+                    if raw_data:
+                        device_data = self._cached_device_data
+                        device_data.ParseFromString(raw_data)
+                        
+                        self._battery_percent = device_data.battery_percent
+                        self._tracking = device_data.currently_tracking
+                        self._tracking_lost_counter = device_data.tracking_lost_counter
+                
+                # Parse command responses
+                elif "response" in topic_name:
+                    raw_data = value.getRaw() if hasattr(value, 'getRaw') else bytes()
+                    
+                    if raw_data:
+                        response = self._cached_response
+                        response.ParseFromString(raw_data)
+                        
+                        if not response.success:
+                            print(f"QuestNav command {response.command_id} failed: {response.error_message}")
+                        
+            except Exception as e:
+                print(f"QuestNav error processing data: {e}")
 
 
 __all__ = ['QuestNav', 'PoseFrame']

@@ -47,11 +47,6 @@ class Drive(Subsystem):
             Rotation2d(),
             self.getWheelPositions()
         )
-        # TODO: Move this to auto selection - set the starting pose from the initial auto pose
-        # This only works if we're using PathPlanner or similar - otherwise we'll have to come up with a pose reset routine 
-        self._questnav.set_pose(Pose3d(
-            Translation3d(1, 1, 0),
-            Rotation3d()))
     
     def getPose(self) -> Pose2d:
         """Returns the current robot pose based on odometry"""
